@@ -1,104 +1,46 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# VS Code
-.vscode/*
-!.vscode/extensions.json
-!.vscode/launch.json
-!.vscode/settings.json
-!.vscode/tasks.json
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# =========================
+# Core Flutter / Dart (核心)
+# =========================
 .dart_tool/
-.packages
-.flutter-plugins-dependencies
 .flutter-plugins
+.flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
-/coverage/
+pubspec.lock
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android/Gradle 相关（本地与构建缓存）
+# =========================
+# Android / Gradle (安卓专用)
+# =========================
 **/android/.gradle/
 **/android/.cxx/
-**/android/**/captures/
 **/android/local.properties
-**/android/**/local.properties
+**/android/*/generated/
+**/android/*/captures/
+# Android 构建产物
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
 
-# Android 签名/密钥（不要提交到 GitHub）
-**/android/**/key.properties
-**/android/**/keystore.properties
-*.jks
+# =========================
+# Security (安全 - 绝对不提交)
+# =========================
 *.keystore
-*.p12
-
-# iOS/macOS（CocoaPods 与临时产物）
-**/ios/Pods/
-**/ios/.symlinks/
-**/ios/Flutter/ephemeral/
-**/ios/Flutter/Flutter.framework/
-**/ios/Flutter/App.framework/
-**/ios/Flutter/Flutter.podspec
-**/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/Flutter-*.xcconfig
-**/ios/Runner.xcworkspace/
-**/ios/DerivedData/
-**/macos/Pods/
-**/macos/Flutter/ephemeral/
-
-# Windows/Linux/Web Flutter generated
-**/windows/flutter/ephemeral/
-**/linux/flutter/ephemeral/
-**/web/build/
-**/web/version.json
-
-# Xcode 用户态文件
-**/*.xcuserstate
-**/*.xcuserdata/
-
-# 本地测试/工具下载的 Isar Core 二进制（可由测试自动下载）
-/isar.dll
-/libisar.so
-/libisar.dylib
-/isar_*.dll
-
-# Trae / IDE 本地配置
-.trae/
-
-# Environment variables
+*.jks
+**/*.p12
+**/android/key.properties
+**/android/**/key.properties
 .env
 .env.*
-!.env.example
 
-# Flutter Version Manager
-.fvm/
-
-# Android Studio - generated build artifacts
-/android/app/debug
-/android/app/profile
-/android/app/release
+# =========================
+# IDE Settings (编辑器配置)
+# =========================
+.idea/
+.vscode/
+.trae/
+*.iml
+*.ipr
+*.iws
+.DS_Store
