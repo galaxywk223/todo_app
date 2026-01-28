@@ -1,5 +1,13 @@
 # =========================
-# Core Flutter / Dart (核心)
+# Miscellaneous
+# =========================
+.DS_Store
+.history
+.env
+.env.*
+
+# =========================
+# Core Flutter / Dart
 # =========================
 .dart_tool/
 .flutter-plugins
@@ -8,34 +16,42 @@
 .pub-cache/
 .pub/
 /build/
-pubspec.lock
 
 # =========================
-# Android / Gradle (安卓专用)
+# Ignored Platforms (User only targets Android)
+# =========================
+/ios/
+/linux/
+/macos/
+/web/
+/windows/
+
+# =========================
+# Android related
+# (Standard Android/Gradle ignores)
 # =========================
 **/android/.gradle/
 **/android/.cxx/
 **/android/local.properties
 **/android/*/generated/
 **/android/*/captures/
-# Android 构建产物
 **/android/app/debug
 **/android/app/profile
 **/android/app/release
-
-# =========================
-# Security (安全 - 绝对不提交)
-# =========================
-*.keystore
-*.jks
-**/*.p12
 **/android/key.properties
-**/android/**/key.properties
-.env
-.env.*
+**/android/*.jks
+**/android/*.keystore
+# Native IntelliJ project files in android/
+**/android/*.iml
+**/android/.idea
+**/android/.settings
+# Gradle wrapper (Optional: strictly not 'useless' but some people ignore. Keeping it is safer for CI)
+# **/android/gradle/
+# **/android/gradlew
+# **/android/gradlew.bat
 
 # =========================
-# IDE Settings (编辑器配置)
+# IDE / Editor
 # =========================
 .idea/
 .vscode/
@@ -43,4 +59,3 @@ pubspec.lock
 *.iml
 *.ipr
 *.iws
-.DS_Store
