@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppTheme {
   final String name;
@@ -69,7 +70,11 @@ class AppTheme {
 }
 
 class ThemeController extends ValueNotifier<AppTheme> {
-  ThemeController(super.value);
+  ThemeController(super.value) {
+    _loadTheme();
+  }
+
+  static const String _prefsKey = 'selected_theme_name';
 
   static final List<AppTheme> availableThemes = [
     const AppTheme(name: '抹茶清茶', seedColor: Color(0xFF81C784)), // Matcha Green
@@ -85,7 +90,21 @@ class ThemeController extends ValueNotifier<AppTheme> {
     ), // Night Mode
   ];
 
-  void setTheme(AppTheme theme) {
+  Future<void> setTheme(AppTheme theme) async {
     value = theme;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, theme.name);
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_prefsKey);
+    if (name != null) {
+      final theme = availableThemes.firstWhere(
+        (t) => t.name == name,
+        orElse: () => availableThemes.first,
+      );
+      value = theme;
+    }
   }
 }
