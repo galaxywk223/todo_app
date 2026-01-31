@@ -13,60 +13,62 @@ class AppTheme {
   });
 
   ThemeData get themeData => ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: seedColor,
-      brightness: brightness,
-    ),
-    appBarTheme: AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: ColorScheme.fromSeed(
-        seedColor: seedColor,
-        brightness: brightness,
-      ).surface,
-      titleTextStyle: TextStyle(
-        color: ColorScheme.fromSeed(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
           seedColor: seedColor,
           brightness: brightness,
-        ).onSurface,
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.2,
-      ),
-    ),
-    cardTheme: CardThemeData(
-      elevation: 0, // Flat style is more modern/student-like
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20), // More rounded
-        side: BorderSide(
-          color: ColorScheme.fromSeed(
+        ),
+        appBarTheme: AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: ColorScheme.fromSeed(
             seedColor: seedColor,
             brightness: brightness,
-          ).outlineVariant.withValues(alpha: 0.5),
-          width: 1,
+          ).surface,
+          titleTextStyle: TextStyle(
+            color: ColorScheme.fromSeed(
+              seedColor: seedColor,
+              brightness: brightness,
+            ).onSurface,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
         ),
-      ),
-      clipBehavior: Clip.antiAlias,
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      filled: true,
-      fillColor: ColorScheme.fromSeed(
-        seedColor: seedColor,
-        brightness: brightness,
-      ).surfaceContainerHighest.withValues(alpha: 0.5),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-    ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    ),
-  );
+        cardTheme: CardTheme(
+          elevation: 0, // Flat style is more modern/student-like
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // More rounded
+            side: BorderSide(
+              color: ColorScheme.fromSeed(
+                seedColor: seedColor,
+                brightness: brightness,
+              ).outlineVariant.withOpacity(0.5),
+              width: 1,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: ColorScheme.fromSeed(
+            seedColor: seedColor,
+            brightness: brightness,
+          ).surfaceContainerHighest.withOpacity(0.5),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          elevation: 4,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      );
 }
 
 class ThemeController extends ValueNotifier<AppTheme> {

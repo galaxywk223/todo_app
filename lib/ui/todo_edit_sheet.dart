@@ -129,7 +129,7 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
                           ),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<TodoQuadrant>(
-                            initialValue: _quadrant,
+                            value: _quadrant,
                             decoration: const InputDecoration(
                               labelText: '四象限（重要/紧急）',
                               border: OutlineInputBorder(),
@@ -260,8 +260,7 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
     final todoId = widget.todoId;
     if (todoId == null) return;
 
-    final confirmed =
-        await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('删除待办？'),

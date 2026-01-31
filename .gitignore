@@ -5,6 +5,8 @@
 .history
 .env
 .env.*
+*.log
+flutter_*.log
 
 # =========================
 # Core Flutter / Dart
@@ -16,6 +18,8 @@
 .pub-cache/
 .pub/
 /build/
+/coverage/
+.fvm/
 
 # =========================
 # Ignored Platforms (User only targets Android)
@@ -59,3 +63,15 @@
 *.iml
 *.ipr
 *.iws
+
+# =========================
+# OHOS / DevEco
+# =========================
+/ohos/.hvigor/
+/ohos/oh_modules/
+/ohos/node_modules/
+/ohos/build/
+/ohos/entry/build/
+/ohos/har/*.har
+/ohos/local.properties
+/ohos/.cxx/

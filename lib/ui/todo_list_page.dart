@@ -305,17 +305,14 @@ class _TodoCardState extends State<_TodoCard>
                                   : null,
                               color: isChecked
                                   ? Theme.of(context).colorScheme.onSurface
-                                        .withValues(alpha: 0.6)
+                                        .withOpacity(0.6)
                                   : null,
                             ),
                       ),
-                      if (todo.note != null ||
-                          todo.dueAt != null ||
-                          todo.priority != 1)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: _buildSubtitle(context, todo),
-                        ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: _buildSubtitle(context, todo),
+                      ),
                     ],
                   ),
                 ),
@@ -355,7 +352,7 @@ class _TodoCardState extends State<_TodoCard>
         decoration: BoxDecoration(
           color: quadrant
               .containerColor(scheme)
-              .withValues(alpha: todo.isDone ? 0.5 : 1),
+              .withOpacity(todo.isDone ? 0.5 : 1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -365,7 +362,7 @@ class _TodoCardState extends State<_TodoCard>
             fontWeight: FontWeight.bold,
             color: quadrant
                 .onContainerColor(scheme)
-                .withValues(alpha: todo.isDone ? 0.7 : 1),
+                .withOpacity(todo.isDone ? 0.7 : 1),
           ),
         ),
       ),
