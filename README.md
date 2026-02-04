@@ -2,6 +2,10 @@
 
 A new Flutter project.
 
+## OpenHarmony（鸿蒙）
+
+鸿蒙工程在 [ohos/README.md](file:///e:/Code/Projects/todo_app/ohos/README.md)。
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

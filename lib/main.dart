@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
 
-import 'data/app_isar.dart';
 import 'data/todo_repository.dart';
 import 'theme.dart';
 import 'ui/todo_list_page.dart';
@@ -19,23 +17,23 @@ class TodoApp extends StatefulWidget {
 }
 
 class _TodoAppState extends State<TodoApp> {
-  late final Future<Isar> _isarFuture;
+  late final Future<TodoRepository> _repositoryFuture;
   late final ThemeController _themeController;
-  Isar? _isar;
+  TodoRepository? _repository;
 
   @override
   void initState() {
     super.initState();
     _themeController = ThemeController(ThemeController.availableThemes.first);
-    _isarFuture = openIsar().then((isar) {
-      _isar = isar;
-      return isar;
+    _repositoryFuture = TodoRepository.open().then((repository) {
+      _repository = repository;
+      return repository;
     });
   }
 
   @override
   void dispose() {
-    _isar?.close();
+    _repository?.dispose();
     _themeController.dispose();
     super.dispose();
   }
@@ -48,8 +46,8 @@ class _TodoAppState extends State<TodoApp> {
         return MaterialApp(
           title: '待办',
           theme: theme.themeData,
-          home: FutureBuilder<Isar>(
-            future: _isarFuture,
+          home: FutureBuilder<TodoRepository>(
+            future: _repositoryFuture,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Scaffold(
@@ -68,7 +66,7 @@ class _TodoAppState extends State<TodoApp> {
                 );
               }
 
-              final repository = TodoRepository(snapshot.data!);
+              final repository = snapshot.data!;
               return TodoListPage(
                 repository: repository,
                 themeController: _themeController,
