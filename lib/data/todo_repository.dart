@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app_isar.dart';
 import 'todo.dart';
+import 'todo_priority.dart';
 
 abstract class TodoRepository {
   Stream<List<Todo>> watchTodos();
@@ -17,6 +18,7 @@ abstract class TodoRepository {
     String? note,
     DateTime? dueAt,
     int priority = 1,
+    bool isResident = false,
   });
 
   Future<Todo?> getTodoById(Id id);
@@ -41,11 +43,31 @@ abstract class TodoRepository {
   }
 
   static int compareTodos(Todo a, Todo b) {
-    final doneCmp = (a.isDone ? 1 : 0).compareTo(b.isDone ? 1 : 0);
+    final now = DateTime.now();
+
+    // 1) 常驻项永远置顶
+    final residentCmp = (a.isResident ? 0 : 1).compareTo(b.isResident ? 0 : 1);
+    if (residentCmp != 0) return residentCmp;
+
+    // 2) 常驻项内按重要性排序（重要 -> 一般 -> 不重要）
+    if (a.isResident && b.isResident) {
+      final importanceCmp = normalizedImportanceForTodo(a).compareTo(
+        normalizedImportanceForTodo(b),
+      );
+      if (importanceCmp != 0) return importanceCmp;
+      return b.createdAt.compareTo(a.createdAt);
+    }
+
+    // 3) 普通项按完成状态、紧急度、截止时间排序
+    final aDone = isResidentDoneToday(a, now: now);
+    final bDone = isResidentDoneToday(b, now: now);
+    final doneCmp = (aDone ? 1 : 0).compareTo(bDone ? 1 : 0);
     if (doneCmp != 0) return doneCmp;
 
-    final priorityCmp = a.priority.compareTo(b.priority);
-    if (priorityCmp != 0) return priorityCmp;
+    final aUrgency = urgencyRank(urgencyByDueAt(a.dueAt, now: now));
+    final bUrgency = urgencyRank(urgencyByDueAt(b.dueAt, now: now));
+    final urgencyCmp = aUrgency.compareTo(bUrgency);
+    if (urgencyCmp != 0) return urgencyCmp;
 
     final aDue = a.dueAt;
     final bDue = b.dueAt;
@@ -81,13 +103,17 @@ class IsarTodoRepository implements TodoRepository {
     String? note,
     DateTime? dueAt,
     int priority = 1,
+    bool isResident = false,
   }) async {
     final now = DateTime.now();
+    final normalizedPriority = normalizeImportanceFromLegacy(priority);
     final todo = Todo()
       ..title = title
       ..note = note
-      ..dueAt = dueAt
-      ..priority = priority
+      ..dueAt = isResident ? null : dueAt
+      ..priority = normalizedPriority
+      ..isResident = isResident
+      ..residentDoneAt = null
       ..createdAt = now
       ..updatedAt = now;
 
@@ -103,6 +129,10 @@ class IsarTodoRepository implements TodoRepository {
 
   @override
   Future<void> saveTodo(Todo todo) async {
+    todo
+      ..priority = normalizeImportanceFromLegacy(todo.priority)
+      ..dueAt = todo.isResident ? null : todo.dueAt
+      ..residentDoneAt = todo.isResident ? todo.residentDoneAt : null;
     todo.updatedAt = DateTime.now();
     await _isar.writeTxn(() async {
       await _isar.todos.put(todo);
@@ -114,9 +144,17 @@ class IsarTodoRepository implements TodoRepository {
     await _isar.writeTxn(() async {
       final todo = await _isar.todos.get(id);
       if (todo == null) return;
-      todo
-        ..isDone = isDone
-        ..updatedAt = DateTime.now();
+      final now = DateTime.now();
+      if (todo.isResident) {
+        todo
+          ..residentDoneAt = isDone ? now : null
+          ..isDone = false
+          ..updatedAt = now;
+      } else {
+        todo
+          ..isDone = isDone
+          ..updatedAt = now;
+      }
       await _isar.todos.put(todo);
     });
   }
@@ -180,10 +218,17 @@ class FileTodoRepository implements TodoRepository {
     todo.title = (raw['title'] as String?) ?? '';
     todo.note = raw['note'] as String?;
     todo.isDone = (raw['isDone'] as bool?) ?? false;
-    todo.priority = (raw['priority'] is num) ? (raw['priority'] as num).toInt() : 0;
+    final rawPriority = (raw['priority'] is num) ? (raw['priority'] as num).toInt() : 0;
+    todo.priority = normalizeImportanceFromLegacy(rawPriority);
+    todo.isResident = (raw['isResident'] as bool?) ?? false;
     todo.createdAt = DateTime.tryParse(raw['createdAt'] as String? ?? '') ?? DateTime.now();
     todo.updatedAt = DateTime.tryParse(raw['updatedAt'] as String? ?? '') ?? todo.createdAt;
-    todo.dueAt = raw['dueAt'] == null ? null : DateTime.tryParse(raw['dueAt'] as String);
+    todo.dueAt = todo.isResident
+        ? null
+        : (raw['dueAt'] == null ? null : DateTime.tryParse(raw['dueAt'] as String));
+    todo.residentDoneAt = raw['residentDoneAt'] == null
+        ? null
+        : DateTime.tryParse(raw['residentDoneAt'] as String);
     return todo;
   }
 
@@ -196,7 +241,9 @@ class FileTodoRepository implements TodoRepository {
       'createdAt': todo.createdAt.toIso8601String(),
       'updatedAt': todo.updatedAt.toIso8601String(),
       'dueAt': todo.dueAt?.toIso8601String(),
-      'priority': todo.priority,
+      'priority': normalizeImportanceFromLegacy(todo.priority),
+      'isResident': todo.isResident,
+      'residentDoneAt': todo.residentDoneAt?.toIso8601String(),
     };
   }
 
@@ -221,15 +268,19 @@ class FileTodoRepository implements TodoRepository {
     String? note,
     DateTime? dueAt,
     int priority = 1,
+    bool isResident = false,
   }) async {
     final now = DateTime.now();
     final id = _state.nextId();
+    final normalizedPriority = normalizeImportanceFromLegacy(priority);
     final todo = Todo()
       ..id = id
       ..title = title
       ..note = note
-      ..dueAt = dueAt
-      ..priority = priority
+      ..dueAt = isResident ? null : dueAt
+      ..priority = normalizedPriority
+      ..isResident = isResident
+      ..residentDoneAt = null
       ..createdAt = now
       ..updatedAt = now;
     _state.todos.add(todo);
@@ -248,7 +299,11 @@ class FileTodoRepository implements TodoRepository {
 
   @override
   Future<void> saveTodo(Todo todo) async {
-    todo.updatedAt = DateTime.now();
+    todo
+      ..priority = normalizeImportanceFromLegacy(todo.priority)
+      ..dueAt = todo.isResident ? null : todo.dueAt
+      ..residentDoneAt = todo.isResident ? todo.residentDoneAt : null
+      ..updatedAt = DateTime.now();
     final index = _state.todos.indexWhere((t) => t.id == todo.id);
     if (index >= 0) {
       _state.todos[index] = todo;
@@ -263,9 +318,17 @@ class FileTodoRepository implements TodoRepository {
   Future<void> toggleDone(Id id, {required bool isDone}) async {
     final todo = await getTodoById(id);
     if (todo == null) return;
-    todo
-      ..isDone = isDone
-      ..updatedAt = DateTime.now();
+    final now = DateTime.now();
+    if (todo.isResident) {
+      todo
+        ..residentDoneAt = isDone ? now : null
+        ..isDone = false
+        ..updatedAt = now;
+    } else {
+      todo
+        ..isDone = isDone
+        ..updatedAt = now;
+    }
     await _persist();
     _emit();
   }

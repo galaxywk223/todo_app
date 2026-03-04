@@ -32,23 +32,33 @@ const TodoSchema = CollectionSchema(
       name: r'isDone',
       type: IsarType.bool,
     ),
-    r'note': PropertySchema(
+    r'isResident': PropertySchema(
       id: 3,
+      name: r'isResident',
+      type: IsarType.bool,
+    ),
+    r'note': PropertySchema(
+      id: 4,
       name: r'note',
       type: IsarType.string,
     ),
     r'priority': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'priority',
       type: IsarType.long,
     ),
+    r'residentDoneAt': PropertySchema(
+      id: 6,
+      name: r'residentDoneAt',
+      type: IsarType.dateTime,
+    ),
     r'title': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'title',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -119,10 +129,12 @@ void _todoSerialize(
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeDateTime(offsets[1], object.dueAt);
   writer.writeBool(offsets[2], object.isDone);
-  writer.writeString(offsets[3], object.note);
-  writer.writeLong(offsets[4], object.priority);
-  writer.writeString(offsets[5], object.title);
-  writer.writeDateTime(offsets[6], object.updatedAt);
+  writer.writeBool(offsets[3], object.isResident);
+  writer.writeString(offsets[4], object.note);
+  writer.writeLong(offsets[5], object.priority);
+  writer.writeDateTime(offsets[6], object.residentDoneAt);
+  writer.writeString(offsets[7], object.title);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 Todo _todoDeserialize(
@@ -136,10 +148,12 @@ Todo _todoDeserialize(
   object.dueAt = reader.readDateTimeOrNull(offsets[1]);
   object.id = id;
   object.isDone = reader.readBool(offsets[2]);
-  object.note = reader.readStringOrNull(offsets[3]);
-  object.priority = reader.readLong(offsets[4]);
-  object.title = reader.readString(offsets[5]);
-  object.updatedAt = reader.readDateTime(offsets[6]);
+  object.isResident = reader.readBool(offsets[3]);
+  object.note = reader.readStringOrNull(offsets[4]);
+  object.priority = reader.readLong(offsets[5]);
+  object.residentDoneAt = reader.readDateTimeOrNull(offsets[6]);
+  object.title = reader.readString(offsets[7]);
+  object.updatedAt = reader.readDateTime(offsets[8]);
   return object;
 }
 
@@ -157,12 +171,16 @@ P _todoDeserializeProp<P>(
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 6:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -589,6 +607,16 @@ extension TodoQueryFilter on QueryBuilder<Todo, Todo, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Todo, Todo, QAfterFilterCondition> isResidentEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isResident',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Todo, Todo, QAfterFilterCondition> noteIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -777,6 +805,75 @@ extension TodoQueryFilter on QueryBuilder<Todo, Todo, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'priority',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterFilterCondition> residentDoneAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'residentDoneAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterFilterCondition> residentDoneAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'residentDoneAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterFilterCondition> residentDoneAtEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'residentDoneAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterFilterCondition> residentDoneAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'residentDoneAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterFilterCondition> residentDoneAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'residentDoneAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterFilterCondition> residentDoneAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'residentDoneAt',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1008,6 +1105,18 @@ extension TodoQuerySortBy on QueryBuilder<Todo, Todo, QSortBy> {
     });
   }
 
+  QueryBuilder<Todo, Todo, QAfterSortBy> sortByIsResident() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isResident', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterSortBy> sortByIsResidentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isResident', Sort.desc);
+    });
+  }
+
   QueryBuilder<Todo, Todo, QAfterSortBy> sortByNote() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.asc);
@@ -1029,6 +1138,18 @@ extension TodoQuerySortBy on QueryBuilder<Todo, Todo, QSortBy> {
   QueryBuilder<Todo, Todo, QAfterSortBy> sortByPriorityDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'priority', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterSortBy> sortByResidentDoneAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'residentDoneAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterSortBy> sortByResidentDoneAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'residentDoneAt', Sort.desc);
     });
   }
 
@@ -1106,6 +1227,18 @@ extension TodoQuerySortThenBy on QueryBuilder<Todo, Todo, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Todo, Todo, QAfterSortBy> thenByIsResident() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isResident', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterSortBy> thenByIsResidentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isResident', Sort.desc);
+    });
+  }
+
   QueryBuilder<Todo, Todo, QAfterSortBy> thenByNote() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'note', Sort.asc);
@@ -1127,6 +1260,18 @@ extension TodoQuerySortThenBy on QueryBuilder<Todo, Todo, QSortThenBy> {
   QueryBuilder<Todo, Todo, QAfterSortBy> thenByPriorityDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'priority', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterSortBy> thenByResidentDoneAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'residentDoneAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QAfterSortBy> thenByResidentDoneAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'residentDoneAt', Sort.desc);
     });
   }
 
@@ -1174,6 +1319,12 @@ extension TodoQueryWhereDistinct on QueryBuilder<Todo, Todo, QDistinct> {
     });
   }
 
+  QueryBuilder<Todo, Todo, QDistinct> distinctByIsResident() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isResident');
+    });
+  }
+
   QueryBuilder<Todo, Todo, QDistinct> distinctByNote(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1184,6 +1335,12 @@ extension TodoQueryWhereDistinct on QueryBuilder<Todo, Todo, QDistinct> {
   QueryBuilder<Todo, Todo, QDistinct> distinctByPriority() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'priority');
+    });
+  }
+
+  QueryBuilder<Todo, Todo, QDistinct> distinctByResidentDoneAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'residentDoneAt');
     });
   }
 
@@ -1226,6 +1383,12 @@ extension TodoQueryProperty on QueryBuilder<Todo, Todo, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Todo, bool, QQueryOperations> isResidentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isResident');
+    });
+  }
+
   QueryBuilder<Todo, String?, QQueryOperations> noteProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'note');
@@ -1235,6 +1398,12 @@ extension TodoQueryProperty on QueryBuilder<Todo, Todo, QQueryProperty> {
   QueryBuilder<Todo, int, QQueryOperations> priorityProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'priority');
+    });
+  }
+
+  QueryBuilder<Todo, DateTime?, QQueryOperations> residentDoneAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'residentDoneAt');
     });
   }
 

@@ -3,8 +3,8 @@ import 'package:isar/isar.dart';
 import 'package:intl/intl.dart';
 
 import '../data/todo.dart';
+import '../data/todo_priority.dart';
 import '../data/todo_repository.dart';
-import 'todo_quadrant.dart';
 
 class TodoEditSheet extends StatefulWidget {
   const TodoEditSheet({super.key, required this.repository, this.todoId});
@@ -37,8 +37,9 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
 
   bool _initialized = false;
   bool _saving = false;
+  bool _isResident = false;
   DateTime? _dueAt;
-  TodoQuadrant _quadrant = TodoQuadrant.importantNotUrgent;
+  ImportanceLevel _importance = ImportanceLevel.important;
   Todo? _editingTodo;
 
   late Future<Todo?> _todoFuture;
@@ -79,7 +80,8 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
             _titleController.text = todo.title;
             _noteController.text = todo.note ?? '';
             _dueAt = todo.dueAt;
-            _quadrant = todoQuadrantFromCode(todo.priority);
+            _isResident = todo.isResident;
+            _importance = importanceFromCode(todo.priority);
           }
         }
 
@@ -89,9 +91,9 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
           ),
           child: DraggableScrollableSheet(
             expand: false,
-            initialChildSize: 0.6,
-            minChildSize: 0.4,
-            maxChildSize: 0.9,
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
             builder: (context, scrollController) {
               return Column(
                 children: [
@@ -129,43 +131,30 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
                             maxLines: 6,
                           ),
                           const SizedBox(height: 12),
-                          DropdownButtonFormField<TodoQuadrant>(
-                            value: _quadrant,
-                            decoration: const InputDecoration(
-                              labelText: '四象限（重要/紧急）',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: TodoQuadrant.values.map((q) {
-                              final scheme = Theme.of(context).colorScheme;
-                              final color = q.containerColor(scheme);
-                              return DropdownMenuItem(
-                                value: q,
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 12,
-                                      height: 12,
-                                      decoration: BoxDecoration(
-                                        color: color,
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(q.label),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('设为常驻项'),
+                            subtitle: const Text('每日固定显示在顶部，仅展示重要性'),
+                            value: _isResident,
                             onChanged: (value) {
-                              if (value == null) return;
-                              setState(() => _quadrant = value);
+                              setState(() {
+                                _isResident = value;
+                                if (_isResident) {
+                                  _dueAt = null;
+                                }
+                              });
                             },
                           ),
                           const SizedBox(height: 12),
+                          _buildImportanceField(context),
+                          const SizedBox(height: 12),
+                          _buildUrgencyField(context),
+                          const SizedBox(height: 12),
                           _DueAtTile(
                             dueAt: _dueAt,
-                            onPick: _pickDueAt,
-                            onClear: _dueAt == null
+                            enabled: !_isResident,
+                            onPick: _isResident ? null : _pickDueAt,
+                            onClear: _isResident || _dueAt == null
                                 ? null
                                 : () {
                                     setState(() => _dueAt = null);
@@ -228,26 +217,90 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
     );
   }
 
+  Widget _buildImportanceField(BuildContext context) {
+    return DropdownButtonFormField<ImportanceLevel>(
+      initialValue: _importance,
+      decoration: const InputDecoration(
+        labelText: '重要性',
+        border: OutlineInputBorder(),
+      ),
+      items: ImportanceLevel.values.map((level) {
+        final scheme = Theme.of(context).colorScheme;
+        final color = _importanceColor(scheme, level);
+        return DropdownMenuItem(
+          value: level,
+          child: Row(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(_importanceLabel(level)),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value == null) return;
+        setState(() => _importance = value);
+      },
+    );
+  }
+
+  Widget _buildUrgencyField(BuildContext context) {
+    final urgency = _isResident
+        ? UrgencyLevel.none
+        : urgencyByDueAt(_dueAt);
+
+    String label;
+    if (_isResident) {
+      label = '常驻项不计算紧急度';
+    } else {
+      label = _urgencyLabel(urgency);
+    }
+
+    return InputDecorator(
+      decoration: const InputDecoration(
+        labelText: '紧急度（自动）',
+        border: OutlineInputBorder(),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+
   Future<void> _onSavePressed() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _saving = true);
     try {
       final title = _titleController.text.trim();
       final note = _noteController.text.trim();
+      final importanceCodeValue = importanceCode(_importance);
+      final dueAtValue = _isResident ? null : _dueAt;
 
       if (_editingTodo == null) {
         await widget.repository.addTodo(
           title: title,
           note: note.isEmpty ? null : note,
-          dueAt: _dueAt,
-          priority: _quadrant.code,
+          dueAt: dueAtValue,
+          priority: importanceCodeValue,
+          isResident: _isResident,
         );
       } else {
         final todo = _editingTodo!
           ..title = title
           ..note = note.isEmpty ? null : note
-          ..dueAt = _dueAt
-          ..priority = _quadrant.code;
+          ..dueAt = dueAtValue
+          ..priority = importanceCodeValue
+          ..isResident = _isResident
+          ..residentDoneAt = _isResident ? _editingTodo!.residentDoneAt : null;
         await widget.repository.saveTodo(todo);
       }
 
@@ -301,8 +354,7 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
       cancelText: '取消',
       confirmText: '确定',
     );
-    if (date == null) return;
-    if (!mounted) return;
+    if (date == null || !mounted) return;
 
     final initialTime = _dueAt == null
         ? TimeOfDay(hour: now.hour, minute: now.minute)
@@ -322,8 +374,7 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
         );
       },
     );
-    if (time == null) return;
-    if (!mounted) return;
+    if (time == null || !mounted) return;
 
     setState(() {
       _dueAt = DateTime(
@@ -335,17 +386,44 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
       );
     });
   }
+
+  String _importanceLabel(ImportanceLevel level) {
+    return switch (level) {
+      ImportanceLevel.important => '重要',
+      ImportanceLevel.general => '一般',
+      ImportanceLevel.notImportant => '不重要',
+    };
+  }
+
+  Color _importanceColor(ColorScheme scheme, ImportanceLevel level) {
+    return switch (level) {
+      ImportanceLevel.important => scheme.errorContainer,
+      ImportanceLevel.general => scheme.primaryContainer,
+      ImportanceLevel.notImportant => scheme.surfaceContainerHighest,
+    };
+  }
+
+  String _urgencyLabel(UrgencyLevel level) {
+    return switch (level) {
+      UrgencyLevel.veryUrgent => '非常紧急（24小时内）',
+      UrgencyLevel.urgent => '紧急（72小时内）',
+      UrgencyLevel.normal => '普通（72小时外）',
+      UrgencyLevel.none => '无紧急度',
+    };
+  }
 }
 
 class _DueAtTile extends StatelessWidget {
   const _DueAtTile({
     required this.dueAt,
+    required this.enabled,
     required this.onPick,
     required this.onClear,
   });
 
   final DateTime? dueAt;
-  final VoidCallback onPick;
+  final bool enabled;
+  final VoidCallback? onPick;
   final VoidCallback? onClear;
 
   @override
@@ -358,9 +436,16 @@ class _DueAtTile extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(dueAt == null ? '未设置' : _formatDateTime(dueAt!)),
+            child: Text(
+              enabled
+                  ? (dueAt == null ? '未设置' : _formatDateTime(dueAt!))
+                  : '常驻项不设置到期时间',
+            ),
           ),
-          TextButton(onPressed: onPick, child: const Text('选择')),
+          TextButton(
+            onPressed: onPick,
+            child: const Text('选择'),
+          ),
           if (onClear != null)
             TextButton(onPressed: onClear, child: const Text('清空')),
         ],

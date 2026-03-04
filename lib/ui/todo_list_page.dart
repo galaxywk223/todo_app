@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../data/todo.dart';
+import '../data/todo_priority.dart';
 import '../data/todo_repository.dart';
 import '../theme.dart';
 import 'todo_edit_sheet.dart';
-import 'todo_quadrant.dart';
 
 class TodoListPage extends StatefulWidget {
   const TodoListPage({
@@ -28,9 +28,9 @@ class _TodoListPageState extends State<TodoListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(Icons.task_alt_rounded),
             SizedBox(width: 8),
             Text('待办清单'),
@@ -60,18 +60,20 @@ class _TodoListPageState extends State<TodoListPage> {
         stream: widget.repository.watchTodos(),
         builder: (context, snapshot) {
           final allTodos = snapshot.data ?? const <Todo>[];
-          final todos = allTodos
+          final residents = allTodos.where((t) => t.isResident).toList();
+          final normalTodos = allTodos
+              .where((t) => !t.isResident)
               .where((t) => _showCompleted || !t.isDone)
               .toList();
 
-          if (todos.isEmpty) {
-            if (allTodos.isNotEmpty && !_showCompleted) {
+          if (residents.isEmpty && normalTodos.isEmpty) {
+            if (allTodos.any((t) => !t.isResident) && !_showCompleted) {
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      '太棒了，当前没有待办',
+                      '太棒了，当前没有普通待办',
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
@@ -91,18 +93,32 @@ class _TodoListPageState extends State<TodoListPage> {
             );
           }
 
-          return ListView.builder(
+          return ListView(
             padding: const EdgeInsets.only(bottom: 80),
-            itemCount: todos.length,
-            itemBuilder: (context, index) {
-              final todo = todos[index];
-              return _TodoCard(
-                key: ValueKey(todo.id),
-                todo: todo,
-                repository: widget.repository,
-                hideCompleted: !_showCompleted,
-              );
-            },
+            children: [
+              if (residents.isNotEmpty) ...[
+                const _SectionTitle(title: '今日常驻'),
+                ...residents.map((todo) {
+                  return _TodoCard(
+                    key: ValueKey('resident_${todo.id}'),
+                    todo: todo,
+                    repository: widget.repository,
+                    hideCompleted: false,
+                  );
+                }),
+              ],
+              if (normalTodos.isNotEmpty) ...[
+                const _SectionTitle(title: '普通待办'),
+                ...normalTodos.map((todo) {
+                  return _TodoCard(
+                    key: ValueKey('normal_${todo.id}'),
+                    todo: todo,
+                    repository: widget.repository,
+                    hideCompleted: !_showCompleted,
+                  );
+                }),
+              ],
+            ],
           );
         },
       ),
@@ -158,6 +174,25 @@ class _TodoListPageState extends State<TodoListPage> {
           ),
         );
       },
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      child: Text(
+        title,
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+      ),
     );
   }
 }
@@ -224,8 +259,8 @@ class _TodoCardState extends State<_TodoCard>
 
   Widget _buildCard(BuildContext context) {
     final todo = widget.todo;
-    // If animating out, force checked state visual
-    final isChecked = _isAnimatingOut ? true : todo.isDone;
+    final now = DateTime.now();
+    final done = _isAnimatingOut ? true : isResidentDoneToday(todo, now: now);
 
     return Dismissible(
       key: ValueKey(todo.id),
@@ -267,7 +302,6 @@ class _TodoCardState extends State<_TodoCard>
         widget.repository.deleteTodo(todo.id);
       },
       child: Card(
-        // elevation and margin are handled by Theme
         child: InkWell(
           onTap: () async {
             await TodoEditSheet.show(
@@ -285,7 +319,7 @@ class _TodoCardState extends State<_TodoCard>
                   scale: 1.2,
                   child: Checkbox(
                     shape: const CircleBorder(),
-                    value: isChecked,
+                    value: done,
                     onChanged: (value) {
                       if (value == null) return;
                       _onCheckboxChanged(value);
@@ -301,10 +335,8 @@ class _TodoCardState extends State<_TodoCard>
                         todo.title,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
-                              decoration: isChecked
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                              color: isChecked
+                              decoration: done ? TextDecoration.lineThrough : null,
+                              color: done
                                   ? Theme.of(context).colorScheme.onSurface
                                         .withOpacity(0.6)
                                   : null,
@@ -312,7 +344,7 @@ class _TodoCardState extends State<_TodoCard>
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: _buildSubtitle(context, todo),
+                        child: _buildSubtitle(context, todo, done),
                       ),
                     ],
                   ),
@@ -326,52 +358,48 @@ class _TodoCardState extends State<_TodoCard>
   }
 
   void _onCheckboxChanged(bool value) async {
-    // If we are checking it (value is true) AND we are hiding completed items,
-    // then animate out.
     if (value && widget.hideCompleted) {
       setState(() {
         _isAnimatingOut = true;
       });
       await _controller.forward();
       if (mounted) {
-        widget.repository.toggleDone(widget.todo.id, isDone: value);
+        await widget.repository.toggleDone(widget.todo.id, isDone: value);
       }
-    } else {
-      widget.repository.toggleDone(widget.todo.id, isDone: value);
+      return;
     }
+    await widget.repository.toggleDone(widget.todo.id, isDone: value);
   }
 
-  Widget _buildSubtitle(BuildContext context, Todo todo) {
+  Widget _buildSubtitle(BuildContext context, Todo todo, bool done) {
     final items = <Widget>[];
-    final quadrant = todoQuadrantFromCode(todo.priority);
     final scheme = Theme.of(context).colorScheme;
+    final importance = importanceFromCode(todo.priority);
 
-    // Priority chip
     items.add(
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: quadrant
-              .containerColor(scheme)
-              .withOpacity(todo.isDone ? 0.5 : 1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          quadrant.label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: quadrant
-                .onContainerColor(scheme)
-                .withOpacity(todo.isDone ? 0.7 : 1),
-          ),
-        ),
+      _Pill(
+        text: _importanceLabel(importance),
+        background: _importanceColor(scheme, importance).withOpacity(done ? 0.5 : 1),
+        foreground: _importanceOnColor(scheme, importance).withOpacity(done ? 0.7 : 1),
       ),
     );
 
-    // Due date
-    if (todo.dueAt != null) {
-      final isOverdue = todo.dueAt!.isBefore(DateTime.now()) && !todo.isDone;
+    if (!todo.isResident) {
+      final urgency = urgencyByDueAt(todo.dueAt);
+      if (urgency != UrgencyLevel.none) {
+        final isOverdue = (todo.dueAt?.isBefore(DateTime.now()) ?? false) && !done;
+        items.add(
+          _Pill(
+            text: _urgencyLabel(urgency),
+            background: _urgencyColor(scheme, urgency, isOverdue).withOpacity(done ? 0.5 : 1),
+            foreground: _urgencyOnColor(scheme, urgency, isOverdue).withOpacity(done ? 0.7 : 1),
+          ),
+        );
+      }
+    }
+
+    if (todo.dueAt != null && !todo.isResident) {
+      final isOverdue = todo.dueAt!.isBefore(DateTime.now()) && !done;
       items.add(
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -395,7 +423,6 @@ class _TodoCardState extends State<_TodoCard>
       );
     }
 
-    // Note
     final note = todo.note?.trim();
     if (note != null && note.isNotEmpty) {
       items.add(
@@ -416,7 +443,91 @@ class _TodoCardState extends State<_TodoCard>
     );
   }
 
-  String _formatDateTime(DateTime dt) {
-    return DateFormat('yyyy年M月d日 HH:mm', 'zh_CN').format(dt);
+  String _importanceLabel(ImportanceLevel level) {
+    return switch (level) {
+      ImportanceLevel.important => '重要',
+      ImportanceLevel.general => '一般',
+      ImportanceLevel.notImportant => '不重要',
+    };
   }
+
+  String _urgencyLabel(UrgencyLevel level) {
+    return switch (level) {
+      UrgencyLevel.veryUrgent => '非常紧急',
+      UrgencyLevel.urgent => '紧急',
+      UrgencyLevel.normal => '普通',
+      UrgencyLevel.none => '无紧急度',
+    };
+  }
+
+  Color _importanceColor(ColorScheme scheme, ImportanceLevel level) {
+    return switch (level) {
+      ImportanceLevel.important => scheme.errorContainer,
+      ImportanceLevel.general => scheme.primaryContainer,
+      ImportanceLevel.notImportant => scheme.surfaceContainerHighest,
+    };
+  }
+
+  Color _importanceOnColor(ColorScheme scheme, ImportanceLevel level) {
+    return switch (level) {
+      ImportanceLevel.important => scheme.onErrorContainer,
+      ImportanceLevel.general => scheme.onPrimaryContainer,
+      ImportanceLevel.notImportant => scheme.onSurfaceVariant,
+    };
+  }
+
+  Color _urgencyColor(ColorScheme scheme, UrgencyLevel level, bool isOverdue) {
+    if (isOverdue) return scheme.errorContainer;
+    return switch (level) {
+      UrgencyLevel.veryUrgent => scheme.errorContainer,
+      UrgencyLevel.urgent => scheme.tertiaryContainer,
+      UrgencyLevel.normal => scheme.secondaryContainer,
+      UrgencyLevel.none => scheme.surfaceContainerHighest,
+    };
+  }
+
+  Color _urgencyOnColor(ColorScheme scheme, UrgencyLevel level, bool isOverdue) {
+    if (isOverdue) return scheme.onErrorContainer;
+    return switch (level) {
+      UrgencyLevel.veryUrgent => scheme.onErrorContainer,
+      UrgencyLevel.urgent => scheme.onTertiaryContainer,
+      UrgencyLevel.normal => scheme.onSecondaryContainer,
+      UrgencyLevel.none => scheme.onSurfaceVariant,
+    };
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({
+    required this.text,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String text;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: foreground,
+        ),
+      ),
+    );
+  }
+}
+
+String _formatDateTime(DateTime dt) {
+  return DateFormat('yyyy年M月d日 HH:mm', 'zh_CN').format(dt);
 }
