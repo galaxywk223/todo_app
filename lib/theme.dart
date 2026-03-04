@@ -35,7 +35,7 @@ class AppTheme {
             letterSpacing: 1.2,
           ),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0, // Flat style is more modern/student-like
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           shape: RoundedRectangleBorder(

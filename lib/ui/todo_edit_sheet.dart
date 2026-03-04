@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
+import 'package:intl/intl.dart';
 
 import '../data/todo.dart';
 import '../data/todo_repository.dart';
@@ -209,7 +210,7 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
             child: const Text('取消'),
           ),
           Text(
-            widget.todoId == null ? '新增待办' : '编辑待办',
+            widget.todoId == null ? '新建待办' : '编辑待办',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           TextButton(
@@ -297,6 +298,8 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
         initialDate.day,
       ),
       helpText: '选择到期日期',
+      cancelText: '取消',
+      confirmText: '确定',
     );
     if (date == null) return;
     if (!mounted) return;
@@ -308,6 +311,16 @@ class _TodoEditSheetState extends State<TodoEditSheet> {
       context: context,
       initialTime: initialTime,
       helpText: '选择到期时间',
+      cancelText: '取消',
+      confirmText: '确定',
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
     );
     if (time == null) return;
     if (!mounted) return;
@@ -349,7 +362,7 @@ class _DueAtTile extends StatelessWidget {
           ),
           TextButton(onPressed: onPick, child: const Text('选择')),
           if (onClear != null)
-            TextButton(onPressed: onClear, child: const Text('清除')),
+            TextButton(onPressed: onClear, child: const Text('清空')),
         ],
       ),
     );
@@ -357,10 +370,5 @@ class _DueAtTile extends StatelessWidget {
 }
 
 String _formatDateTime(DateTime dt) {
-  final y = dt.year.toString().padLeft(4, '0');
-  final m = dt.month.toString().padLeft(2, '0');
-  final d = dt.day.toString().padLeft(2, '0');
-  final hh = dt.hour.toString().padLeft(2, '0');
-  final mm = dt.minute.toString().padLeft(2, '0');
-  return '$y-$m-$d $hh:$mm';
+  return DateFormat('yyyy年M月d日 HH:mm', 'zh_CN').format(dt);
 }

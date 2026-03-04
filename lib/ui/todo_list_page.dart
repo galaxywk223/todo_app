@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../data/todo.dart';
 import '../data/todo_repository.dart';
@@ -70,13 +71,13 @@ class _TodoListPageState extends State<TodoListPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      '太棒了！没有作业要做 🎉',
+                      '太棒了，当前没有待办',
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () => setState(() => _showCompleted = true),
-                      child: const Text('查看已完成任务'),
+                      child: const Text('查看已完成'),
                     ),
                   ],
                 ),
@@ -84,7 +85,7 @@ class _TodoListPageState extends State<TodoListPage> {
             }
             return const Center(
               child: Text(
-                '今天很清闲哦 ~ ☕',
+                '暂时没有待办，去休息一下吧',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             );
@@ -110,7 +111,7 @@ class _TodoListPageState extends State<TodoListPage> {
           await TodoEditSheet.show(context, repository: widget.repository);
         },
         icon: const Icon(Icons.add),
-        label: const Text('新增待办'),
+        label: const Text('新建待办'),
       ),
     );
   }
@@ -416,11 +417,6 @@ class _TodoCardState extends State<_TodoCard>
   }
 
   String _formatDateTime(DateTime dt) {
-    final y = dt.year.toString().padLeft(4, '0');
-    final m = dt.month.toString().padLeft(2, '0');
-    final d = dt.day.toString().padLeft(2, '0');
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final mm = dt.minute.toString().padLeft(2, '0');
-    return '$y-$m-$d $hh:$mm';
+    return DateFormat('yyyy年M月d日 HH:mm', 'zh_CN').format(dt);
   }
 }

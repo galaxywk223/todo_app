@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/todo_repository.dart';
 import 'theme.dart';
@@ -46,6 +47,15 @@ class _TodoAppState extends State<TodoApp> {
         return MaterialApp(
           title: '待办',
           theme: theme.themeData,
+          locale: const Locale('zh', 'CN'),
+          supportedLocales: const [
+            Locale('zh', 'CN'),
+          ],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
           home: FutureBuilder<TodoRepository>(
             future: _repositoryFuture,
             builder: (context, snapshot) {

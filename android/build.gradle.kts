@@ -3,6 +3,8 @@ import org.gradle.api.Project
 
 allprojects {
     repositories {
+        maven(url = "https://maven.aliyun.com/repository/google")
+        maven(url = "https://maven.aliyun.com/repository/public")
         google()
         mavenCentral()
     }
