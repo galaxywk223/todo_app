@@ -68,3 +68,7 @@ flutter test
 仓库中包含 `ohos/` 目录，用于 OpenHarmony 版本适配。
 
 相关说明见 [ohos/README.md](ohos/README.md)。
+
+## License
+
+This project is licensed under the GNU General Public License v3.0.
