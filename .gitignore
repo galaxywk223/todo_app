@@ -17,9 +17,12 @@ flutter_*.log
 .packages
 .pub-cache/
 .pub/
+.metadata.bak
 /build/
 /coverage/
 .fvm/
+*.tmp
+*.temp
 
 # =========================
 # Ignored Platforms (User only targets Android)
@@ -29,12 +32,14 @@ flutter_*.log
 /macos/
 /web/
 /windows/
+/build/
 
 # =========================
 # Android related
 # (Standard Android/Gradle ignores)
 # =========================
 **/android/.gradle/
+**/android/.kotlin/
 **/android/.cxx/
 **/android/local.properties
 **/android/*/generated/
@@ -71,6 +76,7 @@ flutter_*.log
 /ohos/oh_modules/
 /ohos/node_modules/
 /ohos/build/
+/ohos/dist/
 /ohos/entry/build/
 /ohos/har/*.har
 /ohos/local.properties
