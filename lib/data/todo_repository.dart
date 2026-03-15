@@ -58,7 +58,7 @@ abstract class TodoRepository {
       return b.createdAt.compareTo(a.createdAt);
     }
 
-    // 3) 普通项按完成状态、紧急度、截止时间排序
+    // 3) 普通项按完成状态、紧急度、截止时间、重要性排序
     final aDone = isResidentDoneToday(a, now: now);
     final bDone = isResidentDoneToday(b, now: now);
     final doneCmp = (aDone ? 1 : 0).compareTo(bDone ? 1 : 0);
@@ -77,6 +77,11 @@ abstract class TodoRepository {
       final dueCmp = aDue.compareTo(bDue);
       if (dueCmp != 0) return dueCmp;
     }
+
+    final importanceCmp = normalizedImportanceForTodo(a).compareTo(
+      normalizedImportanceForTodo(b),
+    );
+    if (importanceCmp != 0) return importanceCmp;
 
     return b.createdAt.compareTo(a.createdAt);
   }

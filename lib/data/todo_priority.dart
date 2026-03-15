@@ -35,8 +35,7 @@ ImportanceLevel importanceFromCode(int code) {
 
 int normalizeImportanceFromLegacy(int storedPriority) {
   return switch (storedPriority) {
-    0 || 1 => 0,
-    2 => 1,
+    0 || 1 || 2 => storedPriority,
     3 => 2,
     _ => storedPriority < 0
         ? 0

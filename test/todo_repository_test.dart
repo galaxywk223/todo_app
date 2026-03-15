@@ -113,4 +113,26 @@ void main() {
       await dir.delete(recursive: true);
     }
   }, skip: !isarAvailable);
+
+  test('TodoRepository：普通项同一截止时间按重要性排序', () async {
+    final dir = await Directory.systemTemp.createTemp('todo_app_test_');
+    Isar? isar;
+    try {
+      isar = await Isar.open([TodoSchema], directory: dir.path);
+      final repo = IsarTodoRepository(isar);
+      final dueAt = DateTime(2099, 1, 1, 12, 0);
+
+      await repo.addTodo(title: '普通-一般', priority: 1, dueAt: dueAt);
+      await repo.addTodo(title: '普通-不重要', priority: 2, dueAt: dueAt);
+      await repo.addTodo(title: '普通-重要', priority: 0, dueAt: dueAt);
+
+      final list = await repo.watchTodos().firstWhere((todos) => todos.length == 3);
+      expect(list[0].title, '普通-重要');
+      expect(list[1].title, '普通-一般');
+      expect(list[2].title, '普通-不重要');
+    } finally {
+      await isar?.close(deleteFromDisk: true);
+      await dir.delete(recursive: true);
+    }
+  }, skip: !isarAvailable);
 }

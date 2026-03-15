@@ -27,8 +27,8 @@ void main() {
 
   test('normalizeImportanceFromLegacy 映射正确', () {
     expect(normalizeImportanceFromLegacy(0), 0);
-    expect(normalizeImportanceFromLegacy(1), 0);
-    expect(normalizeImportanceFromLegacy(2), 1);
+    expect(normalizeImportanceFromLegacy(1), 1);
+    expect(normalizeImportanceFromLegacy(2), 2);
     expect(normalizeImportanceFromLegacy(3), 2);
   });
 
