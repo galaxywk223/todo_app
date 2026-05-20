@@ -1,17 +1,19 @@
 # Todo App
 
-一个专注于日常任务管理的 Flutter 待办应用，当前主要面向 Android 使用。
+[中文文档](./README.zh-CN.md)
 
-## 功能特性
+Todo App is a Flutter task-management application focused on daily personal tasks. The current implementation primarily targets Android and keeps OpenHarmony adaptation files in the repository.
 
-- 新建、编辑、删除待办事项
-- 区分今日常驻任务与普通待办
-- 支持完成状态切换
-- 支持优先级与截止时间展示
-- 支持主题切换
-- 本地持久化保存
+## Features
 
-## 技术栈
+- Create, edit, and delete todo items.
+- Separate persistent today tasks from regular todo items.
+- Toggle completion state.
+- Display priority and due dates.
+- Switch application theme.
+- Persist data locally.
+
+## Tech Stack
 
 - Flutter
 - Dart
@@ -19,45 +21,45 @@
 - Isar
 - Shared Preferences
 
-## 项目结构
+## Project Structure
 
 ```text
 todo_app/
-|- android/          Android 工程
-|- assets/           图标与静态资源
-|- lib/              Flutter 主要业务代码
-|- ohos/             OpenHarmony 适配工程
-|- test/             测试代码
-|- pubspec.yaml      依赖与项目配置
+|- android/          Android project
+|- assets/           icons and static assets
+|- lib/              main Flutter application code
+|- ohos/             OpenHarmony adaptation project
+|- test/             tests
+|- pubspec.yaml      dependencies and project metadata
 ```
 
-更详细的目录说明见 [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)。
+More detailed structure notes are available in [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md).
 
-## 快速开始
+## Quick Start
 
-### 1. 安装依赖
+### Install Dependencies
 
 ```bash
 flutter pub get
 ```
 
-### 2. 运行项目
+### Run
 
-连接 Android 设备或启动模拟器后执行：
+Connect an Android device or start an emulator, then run:
 
 ```bash
 flutter run
 ```
 
-### 3. 运行测试
+### Test
 
 ```bash
 flutter test
 ```
 
-## 代码入口
+## Code Entry Points
 
-如果你是第一次阅读这个项目，建议从下面几个文件开始：
+Primary files:
 
 - `lib/main.dart`
 - `lib/ui/todo_list_page.dart`
@@ -65,18 +67,12 @@ flutter test
 
 ## OpenHarmony
 
-仓库中包含 `ohos/` 目录，用于 OpenHarmony 版本适配。
+The repository contains an `ohos/` directory for OpenHarmony adaptation work.
 
-相关说明见 [ohos/README.md](ohos/README.md)。
+Related notes are available in [ohos/README.md](ohos/README.md).
 
-## 开源协议
+## License
 
-本项目使用 `GPL-3.0` 协议开源。
+This project is released under the [GNU GPLv3](LICENSE).
 
-这意味着：
-
-- 你可以使用、修改和分发这个项目
-- 如果你分发了修改后的版本，也必须继续公开对应源码
-- 不适合做闭源再发布
-
-完整协议见 [LICENSE](./LICENSE)。
+The license allows use, modification, and redistribution. Distributed modified versions must keep the corresponding source code open under GPL-compatible terms. The project is not suitable for closed-source redistribution.
